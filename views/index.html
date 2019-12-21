@@ -1,0 +1,1892 @@
+<!-- This is a static file -->
+<!-- served from your routes in server.js -->
+
+<!-- You might want to try something fancier: -->
+<!-- html/nunjucks docs: https://mozilla.github.io/nunjucks/ -->
+<!-- pug: https://pugjs.org/ -->
+<!-- haml: http://haml.info/ -->
+<!-- hbs(handlebars): http://handlebarsjs.com/ -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Air quality App</title>
+    <meta name="description" content="A cool thing made with Glitch" />
+    <link
+      id="favicon"
+      rel="icon"
+      href="https://glitch.com/edit/favicon-app.ico"
+      type="image/x-icon"
+    />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- import the webpage's stylesheet -->
+
+    <link rel="stylesheet" href="/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css"
+    />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+
+    <!-- import the webpage's client-side javascript file -->
+    <script src="/client.js"></script>
+  </head>
+
+  <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.0.js"></script>
+
+  <body>
+    <div class="container-fluid">
+      <h1 class="text-center mb-3">Air Quality App</h1>
+      <div class="text-center mb-3">
+        <button class="btn btn-info" id="sgLed">Start blinking</button>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--9">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">Russia</span>
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-9" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-9"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-9"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="moscow"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-9" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-9" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-9" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-9"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-9"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-9"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-9"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-9"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-9"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-9"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-9" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = data.data.iaqi.no2.v;
+                  let SulphurDioxide = data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-9").textContent = airQuality;
+                  document.getElementById("pm25-9").textContent = pm25;
+                  document.getElementById("pm10-9").textContent = pm10;
+                  document.getElementById("Ozone-9").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-9"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-9"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-9"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-9").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-9"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-9"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-9"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-9"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-9"
+                  ).textContent = pressure;
+                  document.getElementById("wind-9").textContent = windSpeed;
+                }
+
+                getWeather("moscow");
+
+                getAir("moscow");
+              </script>
+            </article>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--2">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">Australia</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-2" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-2"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-2"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="australia"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-2" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-2" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-2" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-2"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-2"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-2"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-2"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-2"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-2"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-2"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-2" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = null; //data.data.iaqi.pm25.v;
+                  let pm10 = data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = data.data.iaqi.no2.v;
+                  let SulphurDioxide = null; //data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = null; //data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-2").textContent = airQuality;
+                  document.getElementById("pm25-2").textContent = pm25;
+                  document.getElementById("pm10-2").textContent = pm10;
+                  document.getElementById("Ozone-2").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-2"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-2"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-2"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-2").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-2"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-2"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-2"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-2"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-2"
+                  ).textContent = pressure;
+                  document.getElementById("wind-2").textContent = windSpeed;
+                }
+
+                getWeather("australia");
+
+                getAir("australia");
+              </script>
+            </article>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--1">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">Singapore</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-3" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-3"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-3"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="singapore"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-3" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-3" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-3" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-3"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-3"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-3"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-3"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-3"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-3"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-3"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-3" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = null; //data.data.iaqi.no2.v; because singapore data does not show NO2 data
+                  let SulphurDioxide = data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-3").textContent = airQuality;
+                  document.getElementById("pm25-3").textContent = pm25;
+                  document.getElementById("pm10-3").textContent = pm10;
+                  document.getElementById("Ozone-3").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-3"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-3"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-3"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-3").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-3"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-3"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-3"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-3"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-3"
+                  ).textContent = pressure;
+                  document.getElementById("wind-3").textContent = windSpeed;
+                }
+
+                getWeather("singapore");
+
+                getAir("singapore");
+              </script>
+            </article>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--7">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">USA</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-7" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-7"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-7"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="boston"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-7" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-7" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-7" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-7"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-7"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-7"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-7"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-7"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-7"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-7"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-7" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = null; //data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = data.data.iaqi.no2.v;
+                  let SulphurDioxide = data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-7").textContent = airQuality;
+                  document.getElementById("pm25-7").textContent = pm25;
+                  document.getElementById("pm10-7").textContent = pm10;
+                  document.getElementById("Ozone-7").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-7"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-7"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-7"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-7").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-7"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-7"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-7"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-7"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-7"
+                  ).textContent = pressure;
+                  document.getElementById("wind-7").textContent = windSpeed;
+                }
+
+                getWeather("boston");
+
+                getAir("boston");
+              </script>
+            </article>
+          </div>
+        </div>
+      </div>
+      <!--.row -->
+      <div class="row">
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--4">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">Ethiopia</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-4" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-4"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-4"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="ethiopia"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-4" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-4" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-4" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-4"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-4"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-4"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-4"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-4"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-4"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-4"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-4" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = null; //data.data.iaqi.pm10.v;
+                  let Ozone = null; //data.data.iaqi.o3.v;
+                  let NitrogenDioxide = null; //data.data.iaqi.no2.v;
+                  let SulphurDioxide = null; //data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = null; //data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-4").textContent = airQuality;
+                  document.getElementById("pm25-4").textContent = pm25;
+                  document.getElementById("pm10-4").textContent = pm10;
+                  document.getElementById("Ozone-4").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-4"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-4"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-4"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-4").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-4"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-4"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-4"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-4"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-4"
+                  ).textContent = pressure;
+                  document.getElementById("wind-4").textContent = windSpeed;
+                }
+
+                getWeather("addis ababa");
+
+                getAir("addis ababa");
+              </script>
+            </article>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--5">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">Canada</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-5" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-5"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-5"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="canada"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-5" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-5" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-5" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-5"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-5"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-5"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-5"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-5"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-5"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-5"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-5" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = null; //data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = null; //data.data.iaqi.no2.v;
+                  let SulphurDioxide = data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-5").textContent = airQuality;
+                  document.getElementById("pm25-5").textContent = pm25;
+                  document.getElementById("pm10-5").textContent = pm10;
+                  document.getElementById("Ozone-5").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-5"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-5"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-5"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-5").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-5"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-5"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-5"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-5"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-5"
+                  ).textContent = pressure;
+                  document.getElementById("wind-5").textContent = windSpeed;
+                }
+
+                getWeather("toronto");
+
+                getAir("Toronto");
+              </script>
+            </article>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--6">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">China</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-6" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-6"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-6"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="shanghai"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-6" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-6" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-6" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-6"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-6"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-6"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-6"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-6"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-6"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-6"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-6" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = data.data.iaqi.no2.v;
+                  let SulphurDioxide = data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-6").textContent = airQuality;
+                  document.getElementById("pm25-6").textContent = pm25;
+                  document.getElementById("pm10-6").textContent = pm10;
+                  document.getElementById("Ozone-6").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-6"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-6"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-6"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-6").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-6"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-6"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-6"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-6"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-6"
+                  ).textContent = pressure;
+                  document.getElementById("wind-6").textContent = windSpeed;
+                }
+
+                getWeather("shanghai");
+
+                getAir("shanghai");
+              </script>
+            </article>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-body">
+            <article class="card card--8">
+              <div class="card__info-hover"></div>
+              <div class="card__img"></div>
+              <a class="card_link">
+                <div class="card__img--hover"></div>
+              </a>
+              <div class="card__info">
+                <span class="card__category">Brazil</span>
+
+                <h3 class="card__title">
+                  PSI:
+                  <span id="psi-8" class="badge badge-primary badge-pill">
+                  </span>
+
+                  Temp:
+                  <span
+                    id="Temperature-8"
+                    class="badge badge-primary badge-pill"
+                  >
+                  </span
+                  >&#8451;
+                </h3>
+
+                <h5 class="card__title">
+                  Weather Description: <span id="WeatherDescription-8"> </span>
+                </h5>
+              </div>
+
+              <!-- Example single danger button -->
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-primary dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  More info</button
+                ><button
+                  class="btn btn-info"
+                  id="sao paulo"
+                  onclick="selectCountry()"
+                >
+                  Blink
+                </button>
+                <div class="dropdown-menu">
+                  <h6>
+                    PM 2.5:
+                    <span id="pm25-8" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    PM 10:
+                    <span id="pm10-8" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Ozone:
+                    <span id="Ozone-8" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                  <h6>
+                    Nitrogen Dioxide:
+                    <span
+                      id="NitrogenDioxide-8"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Sulphur Dioxide:
+                    <span
+                      id="SulphurDioxide-8"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Carbon Monoxyde:
+                    <span
+                      id="CarbonMonoxyde-8"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>Weather: <span id="weather-8"> </span></h6>
+                  <h6>
+                    Relative Humidity:
+                    <span
+                      id="RelativeHumidity-8"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Visibility:
+                    <span
+                      id="visibility-8"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Atmostpheric Pressure:
+                    <span
+                      id="AtmostphericPressure-8"
+                      class="badge badge-primary badge-pill"
+                    >
+                    </span>
+                  </h6>
+                  <h6>
+                    Wind:
+                    <span id="wind-8" class="badge badge-primary badge-pill">
+                    </span>
+                  </h6>
+                </div>
+              </div>
+
+              <script>
+                async function getAir(country) {
+                  const response = await fetch(
+                    "https://api.waqi.info/feed/" +
+                      country +
+                      "/?token=85b11a1905f8c79ba68eba7a48593096ad35d271"
+                  );
+                  const data = await response.json();
+                  let airQuality = data.data.aqi;
+                  let pm25 = data.data.iaqi.pm25.v;
+                  let pm10 = data.data.iaqi.pm10.v;
+                  let Ozone = data.data.iaqi.o3.v;
+                  let NitrogenDioxide = data.data.iaqi.no2.v;
+                  let SulphurDioxide = data.data.iaqi.so2.v;
+                  let CarbonMonoxyde = data.data.iaqi.co.v;
+
+                  // console.log(airQuality, pm25, pm10,Ozone,NitrogenDioxide,SulphurDioxide,CarbonMonoxyde);
+
+                  //return airQuality;
+                  document.getElementById("psi-8").textContent = airQuality;
+                  document.getElementById("pm25-8").textContent = pm25;
+                  document.getElementById("pm10-8").textContent = pm10;
+                  document.getElementById("Ozone-8").textContent = Ozone;
+                  document.getElementById(
+                    "NitrogenDioxide-8"
+                  ).textContent = NitrogenDioxide;
+                  document.getElementById(
+                    "SulphurDioxide-8"
+                  ).textContent = SulphurDioxide;
+                  document.getElementById(
+                    "CarbonMonoxyde-8"
+                  ).textContent = CarbonMonoxyde;
+                }
+
+                async function getWeather(country) {
+                  const response = await fetch(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" +
+                      country +
+                      "&appid=9013d3098e07b3421469bf162b8a561f"
+                  );
+                  const data = await response.json();
+                  let weather = data.weather[0].main;
+                  let WeatherDescription = data.weather[0].description;
+
+                  let temp = data.main.temp - 273.15;
+                  let pressure = data.main.pressure;
+                  let humidity = data.main.humidity;
+                  let visibility = data.visibility;
+                  let windSpeed = data.wind.speed;
+                  let clouds = data.clouds.all;
+                  let icon = data.weather[0].icon;
+
+                  console.log(
+                    weather,
+                    temp,
+                    pressure,
+                    humidity,
+                    visibility,
+                    windSpeed,
+                    clouds,
+                    WeatherDescription
+                  );
+                  document.getElementById("weather-8").textContent = weather;
+                  document.getElementById(
+                    "WeatherDescription-8"
+                  ).textContent = WeatherDescription;
+                  document.getElementById(
+                    "Temperature-8"
+                  ).textContent = temp.toFixed(2);
+                  document.getElementById(
+                    "RelativeHumidity-8"
+                  ).textContent = humidity;
+                  document.getElementById(
+                    "visibility-8"
+                  ).textContent = visibility;
+                  document.getElementById(
+                    "AtmostphericPressure-8"
+                  ).textContent = pressure;
+                  document.getElementById("wind-8").textContent = windSpeed;
+                }
+
+                getWeather("sao paulo");
+
+                getAir("sao paulo");
+              </script>
+            </article>
+          </div>
+        </div>
+      </div>
+      <!-- /.row -->
+      <!-- /.row -->
+      <!--
+      <div class="row">
+        <div id="map" style="height:380px;" />
+
+        <script>
+          var OSM_URL = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+          var OSM_ATTRIB =
+            '&copy;  <a  href="http://openstreetmap.org/copyright">OpenStreetMap</a>  contributors';
+          var osmLayer = L.tileLayer(OSM_URL, { attribution: OSM_ATTRIB });
+
+          var WAQI_URL =
+            "https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=85b11a1905f8c79ba68eba7a48593096ad35d271";
+          var WAQI_ATTR =
+            'Air  Quality  Tiles  &copy;  <a  href="http://waqi.info">waqi.info</a>';
+          var waqiLayer = L.tileLayer(WAQI_URL, { attribution: WAQI_ATTR });
+
+          var map = L.map("map").setView([51.505, -0.09], 11);
+          map.addLayer(osmLayer).addLayer(waqiLayer);
+        </script>
+      </div>
+ -->
+
+      <h1 class="text-center">
+        Make a difference by planting a tree!
+      </h1>
+
+      <img
+        src="https://teamtrees.org/images/logo-teamtrees-full.svg"
+        class="mx-auto"
+      />
+      <div class="text-center mb-3">
+        <button
+          type="button"
+          class="btn btn-success btn-lg"
+          onclick="location.href='https://teamtrees.org/'"
+        >
+          click to plant a tree!
+        </button>
+      </div>
+    </div>
+
+    <script src="https://button.glitch.me/button.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+      integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+      integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+      crossorigin="anonymous"
+    ></script>
+    <script type="text/javascript">
+      const PUBLISH_KEY = "pub-c-98ddfdea-b2e1-410e-ac25-51953318499f";
+      const SUBSCRIBE_KEY = "sub-c-fcdbaa5a-0563-11ea-b0c5-1a72d7432d4b";
+      const pubnub = new PubNub({
+        publishKey: PUBLISH_KEY,
+        subscribeKey: SUBSCRIBE_KEY,
+        ssl: true
+      });
+
+      var channel = "led";
+      var button = document.querySelector("#sgLed");
+      var countryButton = document.querySelector(".countryButton");
+      var blinkState = true;
+
+      button.addEventListener("click", function(e) {
+        console.log("pressed");
+        pubnub.publish(
+          {
+            message: {
+              blink: blinkState,
+              fastBlink: false,
+              channel: "my_channel"
+            },
+            channel: "my_channel",
+            sendByPost: false, // true to send via post
+            storeInHistory: false //override default storage options
+          },
+          function(status, response) {
+            if (status.error) {
+              // handle error
+              console.log(status);
+            } else {
+              console.log("message Published w/ timetoken", response.timetoken);
+            }
+          }
+        );
+      });
+
+      function clearSection() {
+        document.querySelector("countryInfo").innerHTML = "";
+      }
+
+      function selectCountry() {
+        let countrySelected = event.srcElement.id;
+        var saopauloPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FBrazil.mp3?v=1575973063801"
+        );
+        var canadaPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FCanada.mp3?v=1575973064688"
+        );
+        var shanghaiPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FChina.mp3?v=1575973066259"
+        );
+        var ethiopiaPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FEthiopia.mp3?v=1575973069027"
+        );
+        var moscowPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FRussia.mp3?v=1575973074146"
+        );
+        var singaporePlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FSingapore.mp3?v=1575973076109"
+        );
+        var bostonPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FUnitedStates.mp3?v=1575973081831"
+        );
+        var australiaPlay = new Audio(
+          "https://cdn.glitch.com/eab3c329-61aa-4ba0-ac6a-8f29f31df641%2FAustralia.mp3?v=1575973913290"
+        );
+
+        if (countrySelected == "sao paulo") {
+          countryPlay = saopauloPlay;
+        } else if (countrySelected == "canada") {
+          countryPlay = canadaPlay;
+        } else if (countrySelected == "shanghai") {
+          countryPlay = shanghaiPlay;
+        } else if (countrySelected == "ethiopia") {
+          countryPlay = ethiopiaPlay;
+        } else if (countrySelected == "moscow") {
+          countryPlay = moscowPlay;
+        } else if (countrySelected == "singapore") {
+          countryPlay = singaporePlay;
+        } else if (countrySelected == "boston") {
+          countryPlay = bostonPlay;
+        } else if (countrySelected == "australia") {
+          countryPlay = australiaPlay;
+        }
+
+        countryPlay.play();
+
+        pubnub.publish(
+          {
+            message: {
+              fastBlink: true,
+              country: countrySelected,
+              usecase: "update",
+              channel: "my_channel"
+            },
+            channel: "my_channel",
+            sendByPost: false, // true to send via post
+            storeInHistory: false //override default storage options
+          },
+          function(status, response) {
+            if (status.error) {
+              // handle error
+              console.log(status);
+            } else {
+              console.log("message Published w/ timetoken", response.timetoken);
+            }
+          }
+        );
+      }
+    </script>
+  </body>
+</html>
